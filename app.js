@@ -1,47 +1,71 @@
 (function (){
 	'use strict';
-	angular.module('LunchCheck',[])
+	angular.module('ShoppingListCheckOff',[])
 
-	.controller('LunchCheckController',LunchCheckController);
-	LunchCheckController.$inject = ['$scope'];
-	function LunchCheckController($scope)
+	.controller('ToBuyController',ToBuyController)
+    .controller('AlreadyBoughtController',AlreadyBoughtController)
+	.provider("ShoppingListService", ShoppingListServiceProvider)
+    .service("ShoppingListCheckOffService",ShoppingListCheckOffService)
+	
+	ToBuyController.$inject = ['ShoppingListCheckOffService'];
+	function ToBuyController(ShoppingListCheckOffService)
 	{
-		$scope.lunchMsg = "";
-		$scope.lunchItems = "";
-		$scope.msgColor = "#FF0000";
-		$scope.borderColor = "#C0C0C0";
-		$scope.checkLunch = function(){ 
-			var items = $scope.lunchItems.split(",");
-			items = items.filter(function(item) 
-			                      { 
-			                       return item.trim() != ''; 
-			                       });      //Filter the Array! If there are empty strings, remove them!
-			var mColor = "#00FF00"
-			var bColor = "#00FF00"
-			var msg = "";
-			if (items == "") 
-			{
-              msg = "Please enter data first!";
-              mColor = "#FF0000";
-              bColor = "#FF0000";
-			}
-			else
-			{
-				var itemsLength = items.length;
-				if(itemsLength <= 3)
-				{
-					msg = "Enjoy!";
-				}
-				else
-				{
-					msg = "Too much!";
-				}
-			}
-			
-			$scope.lunchMsg = msg;
-			$scope.msgColor = mColor;
-			$scope.borderColor = bColor;
-		};
-		
+		var buy = this;
+        buy.items = ShoppingListCheckOffService.getBuyArray();
+        buy.buyItem = function(index){
+            ShoppingListCheckOffService.buy(index);
+        };
     }
-	})(); //an IIFE (Immediately Envoked Function)
+
+   AlreadyBoughtController.$inject = ['ShoppingListCheckOffService'];
+   function AlreadyBoughtController(ShoppingListCheckOffService)
+    {
+        var bought = this;
+        bought.items = ShoppingListCheckOffService.getBoughtArray();
+    } 
+
+
+
+    function ShoppingListCheckOffService()
+    {
+    	var service = this;
+
+    	var toBuy = [
+    {name:"Milk", quantity: 100 },
+    {name:"Donuts", quantity: 1200 },
+    {name:"Soda", quantity: 300 },
+    {name:"Lays", quantity: 10 },
+    {name:"Pringles", quantity: 50 },
+    {name:"Soap", quantity: 500 }
+    ];
+    var bought = [];
+
+    	service.buy = function(index)
+    	{
+           var item = {
+            name: toBuy[index].name,
+            quantity: toBuy[index].quantity
+           }
+           toBuy.splice(index,1);
+           bought.push(item);
+    	}
+        service.getBuyArray = function()
+        {
+            return toBuy;
+        }
+        service.getBoughtArray = function()
+        {
+            return bought;
+        }
+    }
+    function ShoppingListServiceProvider(){
+        var provider = this;
+        provider.defaults = {
+            maxItems : 10
+        };
+        provider.$get = function(){
+            var shoppingList = new ShoppingListService(provider.defaults.maxItems);
+            return shoppingList;
+        }
+    }
+	})(); //an IIFE (Immediately Invoked Function Expression)
